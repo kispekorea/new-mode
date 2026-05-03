@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // BodyStateRecord validation
+    function isValidBodyStateRecord(data) {
+      return data.keys().hasAll(['date', 'memo', 'userId', 'createdAt', 'updatedAt']) &&
+             data.date is string && data.date.size() <= 64 &&
+             data.memo is string && data.memo.size() <= 10000 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number &&
+             (data.get('weight', null) == null || (data.weight is string && data.weight.size() <= 64)) &&
+             (data.get('rhythm', null) == null || (data.rhythm is string && data.rhythm.size() <= 64)) &&
+             (data.get('walk', null) == null || (data.walk is string && data.walk.size() <= 64)) &&
+             (data.get('muscle', null) == null || (data.muscle is string && data.muscle.size() <= 64)) &&
+             (data.get('bodyCheck', null) == null || (data.bodyCheck is string && data.bodyCheck.size() <= 64)) &&
+             (data.get('sleep', null) == null || (data.sleep is string && data.sleep.size() <= 64)) &&
+             (data.get('imageUrl', null) == null || (data.imageUrl is string && data.imageUrl.size() <= 1000000)) &&
+             (data.get('moodEmoji', null) == null || (data.moodEmoji is string && data.moodEmoji.size() <= 64)) &&
+             data.userId == request.auth.uid;
+    }
+    
+    // WishlistItem validation
+    function isValidWishlistItem(data) {
+      return data.keys().hasAll(['date', 'name', 'type', 'status', 'necessity', 'price', 'imageUrl', 'userId', 'createdAt', 'updatedAt']) &&
+             data.date is string && data.date.size() <= 64 &&
+             data.name is string && data.name.size() <= 500 &&
+             data.type is string && data.type.size() <= 64 &&
+             data.status is string && data.status.size() <= 64 &&
+             data.necessity is string && data.necessity.size() <= 64 &&
+             data.price is string && data.price.size() <= 128 &&
+             data.imageUrl is string && data.imageUrl.size() <= 6000000 &&
+             (data.get('linkUrl', null) == null || (data.linkUrl is string && data.linkUrl.size() <= 2000)) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number &&
+             data.userId == request.auth.uid;
+    }
+    
+    // AILogItem validation
+    function isValidAILogItem(data) {
+      return data.keys().hasAll(['date', 'toolName', 'usage', 'feedback', 'userId', 'createdAt', 'updatedAt']) &&
+             data.date is string && data.date.size() <= 64 &&
+             data.toolName is string && data.toolName.size() <= 256 &&
+             data.usage is string && data.usage.size() <= 5000 &&
+             data.feedback is string && data.feedback.size() <= 10000 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number &&
+             data.userId == request.auth.uid;
+    }
+    
+    // FocusItem validation
+    function isValidFocusItem(data) {
+      return data.keys().hasAll(['date', 'goal', 'userId', 'createdAt', 'updatedAt']) &&
+             data.date is string && data.date.size() <= 64 &&
+             data.goal is string && data.goal.size() <= 2000 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number &&
+             data.userId == request.auth.uid;
+    }
+    
+    // FocusReflection validation
+    function isValidFocusReflection(data) {
+      return data.keys().hasAll(['content', 'userId', 'createdAt', 'updatedAt']) &&
+             data.content is string && data.content.size() <= 10000 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number &&
+             data.userId == request.auth.uid;
+    }
+    
+    // MemoItem validation
+    function isValidMemoItem(data) {
+      return data.keys().hasAll(['date', 'title', 'content', 'userId', 'createdAt', 'updatedAt']) &&
+             data.date is string && data.date.size() <= 64 &&
+             data.title is string && data.title.size() <= 500 &&
+             data.content is string && data.content.size() <= 50000 &&
+             (data.get('imageUrl', null) == null || (data.imageUrl is string && data.imageUrl.size() <= 5000000)) &&
+             (data.get('audioUrl', null) == null || (data.audioUrl is string && data.audioUrl.size() <= 5000000)) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number &&
+             data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      match /bodyRecords/{recordId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(recordId) && userId == request.auth.uid;
+        allow list: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(userId) && isValidId(recordId) && userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(userId) && isValidId(recordId) && userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(recordId) && userId == request.auth.uid;
+      }
+      
+      match /wishlistItems/{itemId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+        allow list: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+      }
+      
+      match /aiLogs/{logId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(logId) && userId == request.auth.uid;
+        allow list: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(userId) && isValidId(logId) && userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(userId) && isValidId(logId) && userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(logId) && userId == request.auth.uid;
+      }
+      
+      match /focusItems/{itemId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+        allow list: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(itemId) && userId == request.auth.uid;
+      }
+      
+      match /focusReflections/{reflectionId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(reflectionId) && userId == request.auth.uid;
+        allow list: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(userId) && isValidId(reflectionId) && userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(userId) && isValidId(reflectionId) && userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(reflectionId) && userId == request.auth.uid;
+      }
+      
+      match /memos/{memoId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(memoId) && userId == request.auth.uid;
+        allow list: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(userId) && isValidId(memoId) && userId == request.auth.uid;
+        allow update: if isSignedIn() && isValidId(userId) && isValidId(memoId) && userId == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(memoId) && userId == request.auth.uid;
+      }
+    }
+  }
+}
