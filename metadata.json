@@ -1,0 +1,6 @@
+{
+  "name": "Minimal Daily Log",
+  "description": "소비/위시리스트, AI 일지, 집중 목록, 메모를 한곳에서 직관적으로 관리하는 미니멀리듬 앱입니다.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}
